@@ -1,0 +1,22 @@
+---
+- name: Update apt cache.
+  apt: update_cache=yes cache_valid_time=86400
+  tags: php
+
+- name: ensure the php apt repository is present
+  apt_repository:
+    repo='ppa:ondrej/php'
+    update_cache=yes
+    state=present
+  become: yes
+  tags: php
+  
+- name: Ensure PHP packages are installed.
+  apt:
+    name: "{{ item }}"
+    state: "{{ php_packages_state }}"
+    install_recommends: "{{ php_install_recommends }}"
+  with_items: "{{ php_packages }}"
+  register: php_package_install
+  notify: restart webserver
+  tags: php

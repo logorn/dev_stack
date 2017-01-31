@@ -1,0 +1,6 @@
+---
+
+apache_conf_dir: /etc/apache2/conf-available
+apache_conf_extension: '.conf'
+apache_libssl_pkg: 'libssl1.0.0'
+apache_ssl_passphrase_dialog: 'exec:/usr/share/apache2/ask-for-passphrase'

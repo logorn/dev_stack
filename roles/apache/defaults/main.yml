@@ -1,0 +1,17 @@
+---
+apache_user: www-data
+apache_group: www-data
+apache_log_dir: /var/log/apache2
+apache_logrotate_frequency: weekly
+apache_logrotate_count: 52
+apache_conf_dir: /etc/apache2/conf-available
+apache_conf_extension: '.conf'
+apache_modules: []
+apache_vhosts: []
+apache_disabled_vhosts: []
+apache_ports: [ 80 ]
+apache_ssl_ports: [ 443 ]
+apache_pid_file_prefix: /var/run/apache2/apache2
+apache_ssl_passphrase: ''
+apache_ssl_passphrase_dialog: builtin
+apache_hide_signature: true

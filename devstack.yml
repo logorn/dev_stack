@@ -1,0 +1,50 @@
+---
+
+- hosts: devstack
+  roles:
+    - role: swap
+      tags: swap
+    - role: dev-common
+      env: devstack
+      tags: dev-common
+    - role: kernel-update
+      tags: kernel-update
+    - role: apache
+      apache_modules:
+        - rewrite
+        - proxy
+        - proxy_http
+        - proxy_fcgi
+      apache_user: www-data
+      apache_group: www-data
+      apache_log_dir: /data/logs/apache2
+      apache_logrotate_frequency: weekly
+      apache_logrotate_count: 52
+      apache_ports:
+        - 80
+      apache_secure_frame: false
+      apache_vhosts: "{{devstack_vhosts}}"
+      tags: apache      
+    - role: node
+      tags: node
+    - role: php
+      tags: php
+    - role: php-xdebug
+      tags: php
+    - role: cloudfoundry
+      tags: cloudfoundry
+    - role: nginx
+      tags: nginx
+    - role: mongodb
+      mongodb_version: 2.4.9
+      mongodb_bind_ip: 0.0.0.0
+      mongodb_force_authentication: false
+      tags: mongo
+    - role: mysql
+      tags: mysql
+    - role: java
+      tags: java
+    - role: elasticsearch
+      tags: elasticsearch
+    - role: telosys-php
+      tags: telosys-php

@@ -1,0 +1,28 @@
+---
+mongodb_packages:
+  - "mongodb-10gen={{mongodb_version}}"
+mongodb_daemon: mongodb
+mongodb_config: /etc/mongodb.conf
+mongodb_dbpath: /var/lib/mongodb
+mongodb_logpath: /var/log/mongodb
+mongodb_default_dbpath: /var/lib/mongodb
+mongodb_default_logpath: /var/log/mongodb
+mongodb_conflicting_packages:
+  - mongodb-org
+  - mongodb-org-server
+  - mongodb-org-shell
+  - mongodb-org-tools
+  - mongodb-org-mongos
+mongodb_config_template: mongodb.conf
+mongodb_bind_ip: 127.0.0.1
+mongodb_daemon_user: mongodb
+mongodb_daemon_group: mongodb
+mongodb_force_authentication: false
+mongodb_logrotate_frequency: weekly
+mongodb_logrotate_count: 10
+
+mongodb_keyfile_path: ''
+mongodb_keyfile_content: ''
+mongodb_replicaset_name: ''
+
+

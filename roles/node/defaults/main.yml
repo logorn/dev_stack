@@ -1,0 +1,5 @@
+---
+nodesource_gpg_key_url: https://keyserver.ubuntu.com/pks/lookup?op=get&fingerprint=on&search=0x1655A0AB68576280
+nodesource_gpg_key_id: 68576280
+nodesource_repo: deb https://deb.nodesource.com/node_4.x trusty main
+nodesource_minimatch_version: 3.0.2

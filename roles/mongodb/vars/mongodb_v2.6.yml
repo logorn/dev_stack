@@ -1,0 +1,10 @@
+---
+mongodb_packages:
+  - "mongodb-org-server={{mongodb_version}}"
+  - "mongodb-org-shell={{mongodb_version}}"
+  - "mongodb-org-tools={{mongodb_version}}"
+mongodb_daemon: mongod
+mongodb_config: /etc/mongod.conf
+mongodb_conflicting_packages:
+  - mongodb-10gen
+mongodb_config_template: mongod.conf

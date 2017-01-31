@@ -1,0 +1,17 @@
+---
+
+# noop to detect check mode for older versions of ansible.
+# http://docs.ansible.com/ansible/playbooks_checkmode.html#information-about-check-mode-in-variables
+- command: /bin/true
+  register: noop_result
+
+- set_fact: check_mode={{ noop_result|skipped }}
+
+- include: write-kernel-version.yml
+  when: (not kernel_update_store_kernel_version is defined) or (kernel_update_store_kernel_version|bool)
+
+- include: kernel-upgrade.yml
+  when: not kernel_update_rollback
+
+- include: kernel-rollback.yml
+  when: kernel_update_rollback

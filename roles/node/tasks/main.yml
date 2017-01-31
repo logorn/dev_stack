@@ -1,0 +1,46 @@
+---
+- name: Import the node gpg key into apt
+  apt_key:
+    url: "{{nodesource_gpg_key_url}}"
+    id: "{{nodesource_gpg_key_id}}"
+    state: present
+  tags: node
+
+- name: add node ppa repository
+  apt_repository:
+    repo="{{nodesource_repo}}"
+    state=present
+    update_cache=yes
+  tags: node
+
+- name: install common packages
+  apt:
+    name="{{item}}"
+    state=present
+  with_items:
+    - nodejs
+  tags: node
+
+- name: make sure the latest npm is installed
+  npm: name=npm global=true state=latest
+
+- name: fix node dependcy
+  npm: name={{item}} global=yes state=present
+  become: yes
+  with_items:
+    - minimatch@{{nodesource_minimatch_version}} 
+  tags: node
+  
+- name: install node.js packages globally
+  npm: name={{item}} global=yes state=present
+  with_items:
+    - gulp
+    - bower
+    - node-sass
+  tags: node
+
+- name: install jshint
+  npm: global="true" name="jshint"
+  become: yes
+  tags: node
+  

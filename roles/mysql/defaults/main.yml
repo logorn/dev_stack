@@ -1,0 +1,6 @@
+---
+
+mysql_bind_address: 127.0.0.1
+mysql_datadir: /var/lib/mysql
+mysql_admin_user: root
+mysql_admin_password:

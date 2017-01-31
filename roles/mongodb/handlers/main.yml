@@ -1,0 +1,10 @@
+---
+- name: reload mongo
+  service:
+    name={{mongodb_daemon}}
+    state=reloaded
+
+- name: restart mongo
+  service:
+    name={{mongodb_daemon}}
+    state=restarted

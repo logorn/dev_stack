@@ -1,0 +1,51 @@
+---
+- name: Ensure the system can use the HTTPS transport for APT
+  stat:
+    path: /usr/lib/apt/methods/https
+  register: apt_https_transport
+  tags: common
+
+- name: Install HTTPS transport for APT
+  apt:
+    pkg: apt-transport-https
+    state: installed
+  when: not apt_https_transport.stat.exists
+  tags: common
+
+- name: install common packages and utilities from apt
+  apt:
+    name="{{item}}"
+    state=present
+  with_items:
+    - tmux
+    - multitail
+    - curl
+    - python-dev
+    - python-pip
+    - git
+    - jq
+    - htop
+    - mysql-client
+    - mysql-utilities
+    - python-mysqldb
+    - python-pymongo
+    - tree
+    - emacs24-nox
+    - vim
+    - sysstat
+    - traceroute
+    - rsyslog-gnutls
+    - apt-transport-https
+    - vim
+    - wget
+    - htop
+    - logrotate
+    - unzip
+    - sendmail-bin
+    - sendmail
+  tags: common
+  
+- name: install httpie
+  pip: name=httpie state=present
+  tags: common
+    

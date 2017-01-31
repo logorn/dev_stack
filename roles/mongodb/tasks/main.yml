@@ -1,0 +1,134 @@
+---
+- name: add os specific variables
+  include_vars: "{{ansible_distribution|lower}}.yml"
+
+- name: override some defaults when mongodb_version >= 2.6
+  include_vars: mongodb_v2.6.yml
+  when: mongodb_version | version_compare('2.6', '>=')
+
+- name: remove conflicting packages
+  apt:
+    name={{item}}
+    state=absent
+  with_items: conflicting_packages
+
+- name: install mongodb pgp key
+  apt_key:
+    url="http://keyserver.ubuntu.com/pks/lookup?op=get&search=0x9ECBEC467F0CEB10"
+    id=0x7F0CEB10
+    state=present
+
+- name: setup 10gen official repository
+  apt_repository:
+    repo="deb {{mongodb_repository_url}} dist 10gen"
+    state=present
+    update_cache=yes
+
+- name: ensure mongodb group exists
+  group:
+    name={{mongodb_daemon_group}}
+    system=yes
+    state=present
+
+- name: ensure mongodb user exists
+  user:
+    name={{mongodb_daemon_user}}
+    group={{mongodb_daemon_group}}
+    system=yes
+    state=present
+
+- name: ensure mongodb directories exist
+  file:
+    path={{item}}
+    state=directory
+    owner={{mongodb_daemon_user}}
+    group={{mongodb_daemon_group}}
+    recurse=yes
+  with_items:
+    - "{{mongodb_dbpath}}"
+    - "{{mongodb_logpath}}"
+
+- name: copy keyfile
+  copy:
+    dest="{{mongodb_keyfile_path}}"
+    content="{{mongodb_keyfile_content}}"
+    owner={{mongodb_daemon_user}}
+    group={{mongodb_daemon_group}}
+    mode=0600
+  when: mongodb_keyfile_path and mongodb_keyfile_content
+
+- name: configure mongodb
+  template:
+    dest={{mongodb_config}}
+    src={{mongodb_config_template}}
+  register: configure_mongo
+  notify: restart mongo
+
+- name: install mongodb
+  apt:
+    name={{item}}
+    state=present
+    force=yes
+    update_cache=yes
+    cache_valid_time=3600
+  with_items: mongodb_packages
+
+- name: pymongo dependency
+  apt:
+    name={{item.name}}
+    state={{item.state}}
+  with_items:
+    - name: python-pip
+      state: present
+    - name: python-pymongo
+      state: absent
+
+- name: ensure pymongo is installed
+  pip:
+    name=pymongo
+    state=present
+
+- meta: flush_handlers
+
+- wait_for:
+    port=27017
+    state=started
+    timeout=10
+
+- name: configure mongo administrator
+  mongodb_user:
+    database={{mongodb_administrator.database|default('admin')}}
+    user={{mongodb_administrator.name}}
+    password={{mongodb_administrator.password}}
+    roles={{mongodb_administrator.roles|default('root')}}
+    state=present
+  when: mongodb_administrator is defined
+
+- name: configure mongo users with administrator
+  mongodb_user:
+    database={{item.database}}
+    user={{item.name}}
+    password={{item.password}}
+    roles={{item.roles|default('readWrite')}}
+    login_user={{mongodb_administrator.name}}
+    login_password={{mongodb_administrator.password}}
+    state=present
+  with_items: mongodb_users
+  when: mongodb_users is defined and mongodb_administrator is defined
+
+- name: configure mongo users
+  mongodb_user:
+    database={{item.database}}
+    user={{item.name}}
+    password={{item.password}}
+    roles={{item.roles|default('readWrite')}}
+    state=present
+  with_items: mongodb_users
+  when: mongodb_users is defined and mongodb_administrator is not defined
+
+- name: configure logrotate
+  template:
+    dest=/etc/logrotate.d/{{mongodb_daemon}}
+    src=logrotate.conf
+    mode=0644
+  tags: logrotate

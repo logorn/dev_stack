@@ -1,0 +1,31 @@
+---
+- name: Remove default nginx vhost config file (if configured).
+  file:
+    path: "{{ nginx_default_vhost_path }}"
+    state: absent
+  when: nginx_remove_default_vhost
+  notify: restart nginx
+
+- name: Ensure nginx_vhost_path exists.
+  file:
+    path: "{{ nginx_vhost_path }}"
+    state: directory
+  notify: reload nginx
+
+- name: Remove managed vhost config file (if no vhosts are configured).
+  file:
+    path: "{{ nginx_vhost_path }}/default"
+    state: absent
+  when: nginx_vhosts|length == 0
+  notify: reload nginx
+
+- name: demo time.
+  template:
+    src: vhosts.j2
+    dest: "{{ nginx_vhost_path }}/{{ nginx_vhosts_filename }}"
+    owner: root
+    group: "{{ root_group }}"
+    mode: 0644
+  notify:
+    - reload nginx
+

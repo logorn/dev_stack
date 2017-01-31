@@ -1,0 +1,12 @@
+---
+- name: ensure curl is installed
+  apt:
+    name=curl
+    state=installed
+  tags: php
+
+- name: install composer
+  shell:
+    creates={{php_composer_path}}/composer
+    curl -sS https://getcomposer.org/installer | php -- --install-dir="{{php_composer_path}}" --filename=composer
+  tags: php

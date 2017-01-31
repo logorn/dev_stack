@@ -1,0 +1,39 @@
+
+server {
+	listen {{ nginx_vhosts_default_port }} {{ nginx_vhosts_default_server }};
+	listen [::]:{{ nginx_vhosts_default_port }} {{ nginx_vhosts_default_server }} ipv6only=on;
+
+	root {{ nginx_vhosts_root }};
+	index index.php index.html index.htm;
+
+	server_name localhost;
+
+	location / {
+        # try to serve file directly, fallback to app.php
+        try_files $uri /app.php$is_args$args;
+    }
+
+    location ~ ^/(app|app_dev|config)\.php(/|$) {
+		fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+		fastcgi_split_path_info ^(.+\.php)(/.*)$;
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_param HTTPS off;
+	}	
+
+    location ~ [^/]\.php(/|$) {
+        fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+        if (!-f $document_root$fastcgi_script_name) {
+            return 404;
+        }
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+        fastcgi_index index.php;
+        include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+		fastcgi_param HTTPS off;
+    }
+	
+	error_log /var/log/nginx/project_error.log;
+	access_log /var/log/nginx/project_access.log;
+}

@@ -1,0 +1,125 @@
+---
+- name: override some defaults depending on distribution
+  include_vars: "{{item}}"
+  with_first_found:
+    - "{{ansible_distribution|lower}}_{{ansible_distribution_version}}.yml"
+    - "{{ansible_distribution|lower}}_{{ansible_distribution_major_version}}.yml"
+    - "{{ansible_os_family}}.yml"
+
+- name: install apache web server
+  apt:
+    pkg=apache2
+    state=latest
+    update_cache=yes
+    cache_valid_time=3600
+
+- name: upgrade openssl and libssl
+  apt:
+    pkg={{item}}
+    state=latest
+  with_items:
+    - openssl
+    - "{{apache_libssl_pkg}}"
+  when: "'ssl' in apache_modules"
+
+- name: install ssl passphrase dialog script
+  template:
+    dest=/etc/apache2/ssl_passphrase_dialog.sh
+    src=ssl_passphrase_dialog.sh
+    mode=0755
+  when: apache_ssl_passphrase != ''
+  notify: restart apache
+
+- name: configure ssl module
+  template:
+    dest=/etc/apache2/mods-available/ssl.conf
+    src=ssl.conf
+  notify: restart apache
+
+- name: configure listening ports
+  template:
+    dest=/etc/apache2/ports.conf
+    src=ports.conf
+  notify: restart apache
+
+- name: update apache directories permissions
+  file:
+    dest=/var/lock/apache2
+    owner={{apache_user}}
+    group={{apache_group}}
+    state=directory
+  notify: restart apache
+
+- name: ensure apache log directory exists
+  file:
+    path={{apache_log_dir}}
+    owner={{apache_user}}
+    group={{apache_group}}
+    state=directory
+  notify: restart apache
+
+- name: configure apache environment
+  template:
+    src=envvars
+    dest=/etc/apache2/envvars
+  notify: restart apache
+
+- name: configure apache logrotate
+  template:
+    src=logrotate.conf
+    dest=/etc/logrotate.d/apache2
+
+- name: activate headers module for security
+  apache2_module:
+    name=headers
+    state=present
+  notify: restart apache
+
+- name: activate apache modules
+  apache2_module:
+    name={{item}}
+    state=present
+  notify: restart apache
+  with_items: apache_modules
+  when: apache_modules is defined
+
+- name: disable default vhost
+  file:
+    dest=/etc/apache2/sites-enabled/000-default{{apache_conf_extension}}
+    state=absent
+  notify: reload apache
+
+- name: configure available vhosts
+  template:
+    src={{item.template}}
+    dest=/etc/apache2/sites-available/{{item.vhost}}{{apache_conf_extension}}
+    owner=root
+    group=root
+    mode=0644
+  with_items: apache_vhosts
+  notify: reload apache
+
+- name: activate enabled vhosts
+  file:
+    src=/etc/apache2/sites-available/{{item.vhost}}{{apache_conf_extension}}
+    dest=/etc/apache2/sites-enabled/{{item.vhost_link|default(item.vhost)}}{{apache_conf_extension}}
+    state=link
+  with_items: apache_vhosts
+  when: item.enabled|default(true)
+  notify: reload apache
+
+- name: remove disabled vhosts links
+  file:
+    dest=/etc/apache2/sites-enabled/{{item.vhost_link|default(item.vhost)}}{{apache_conf_extension}}
+    state=absent
+  with_items: apache_disabled_vhosts
+  notify: reload apache
+
+- name: upgrade security configuration
+  template:
+    dest={{apache_conf_dir}}/security{{apache_conf_extension}}
+    src=security.conf
+    owner=root
+    group=root
+    mode=0644
+  notify: reload apache

@@ -1,0 +1,100 @@
+---
+
+- name: ensure mysql group exists
+  group:
+    name=mysql
+    system=yes
+    state=present
+
+- name: ensure mysql user exists
+  user:
+    name=mysql
+    group=mysql
+    home={{mysql_datadir}}
+    shell=/bin/false
+    comment="MYSQL Server"
+    system=yes
+    state=present
+
+- name: setup mysql data directory
+  file:
+    dest={{mysql_datadir}}
+    state=directory
+    mode=0700
+    owner=mysql
+    group=mysql
+
+- name: setup mysql configuration directory
+  file:
+    dest=/etc/mysql
+    owner=root
+    group=root
+    mode=0755
+    state=directory
+
+- name: configure mysql
+  template:
+    dest=/etc/mysql/my.cnf
+    src=my.cnf
+  notify: restart mysql
+
+- name: configure apparmor for mysql
+  template:
+    dest=/etc/apparmor.d/usr.sbin.mysqld
+    src=apparmor
+  when: ansible_distribution == "Ubuntu"
+
+- name: install mysql server and dependencies
+  apt:
+    pkg={{item}}
+    state=present
+  with_items:
+    - mysql-server
+    - mysql-client
+    - python-mysqldb
+
+- name: ensure mysql is started
+  service:
+    name=mysql
+    state=started
+
+- name: wait for mysql to start
+  wait_for:
+    port=3306
+    state=started
+    timeout=10
+
+- name: create mysql database
+  mysql_db:
+    name={{item.name}}
+    state=present
+    login_user={{mysql_admin_user}}
+    login_password={{mysql_admin_password}}
+  with_items: mysql_databases
+  when: mysql_databases is defined
+
+- name: create mysql user for localhost
+  mysql_user:
+    name={{item.name}}
+    password={{item.password}}
+    priv={{item.privileges|default("*.*:ALL")}}
+    host=localhost
+    append_privs=yes
+    state=present
+    login_user={{mysql_admin_user}}
+    login_password={{mysql_admin_password}}
+  with_items: mysql_users
+  when: mysql_users is defined
+
+- name: create mysql user
+  mysql_user:
+    name={{item.name}}
+    password={{item.password}}
+    priv={{item.privileges|default("*.*:ALL")}}
+    host={{item.host|default("%")}}
+    append_privs=yes
+    state=present
+    login_user={{mysql_admin_user}}
+    login_password={{mysql_admin_password}}
+  with_items: mysql_users
+  when: mysql_users is defined

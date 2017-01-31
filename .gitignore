@@ -1,0 +1,6 @@
+.komodotools
+.vagrant
+.DS_Store
+.komodoproject
+src/project
+devstack.komodoproject

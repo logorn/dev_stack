@@ -1,0 +1,17 @@
+---
+
+devstack_user: vagrant
+devstack_group: vagrant
+
+sources_path: "/data/devstack/src"
+
+devstack_vhosts:
+  - vhost: devstack
+    vhost_link: 000-devstack
+    name: devstack-node
+    template: roles/devstack/templates/vhost-common.conf
+
+private_key_ssh: id_rsa
+public_key_ssh: id_rsa.pub
+
+repositories_base_path: ssh://git@github.com

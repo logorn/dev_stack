@@ -1,0 +1,6 @@
+---
+- include: building_dependencies.yml
+  when: env == 'devstack'
+
+- include: devstack.yml
+  when: env == 'devstack'
